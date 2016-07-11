@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import io.oasp.gastronomy.restaurant.staffmanagement.featuremanager.StaffmanagementFeatures;
 /**
  * Implementation of {@link Staffmanagement}.
  *
@@ -77,6 +78,10 @@ public class StaffmanagementImpl extends AbstractComponentFacade implements Staf
 
     // Uncomment next line in order to limit the maximum page size for the staff member search
     // criteria.limitMaximumPageSize(MAXIMUM_HIT_LIMIT);
+
+    if (StaffmanagementFeatures.LIMIT_STAFF_PAGE_SIZE.isActive()) {
+      criteria.limitMaximumPageSize(MAXIMUM_HIT_LIMIT);
+    }
 
     PaginatedListTo<StaffMemberEntity> offers = getStaffMemberDao().findStaffMembers(criteria);
     return mapPaginatedEntityList(offers, StaffMemberEto.class);

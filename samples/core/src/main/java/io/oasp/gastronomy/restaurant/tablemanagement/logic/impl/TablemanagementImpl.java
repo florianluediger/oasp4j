@@ -11,6 +11,7 @@ import io.oasp.gastronomy.restaurant.staffmanagement.logic.api.to.StaffMemberEto
 import io.oasp.gastronomy.restaurant.tablemanagement.common.api.datatype.TableState;
 import io.oasp.gastronomy.restaurant.tablemanagement.dataaccess.api.TableEntity;
 import io.oasp.gastronomy.restaurant.tablemanagement.dataaccess.api.dao.TableDao;
+import io.oasp.gastronomy.restaurant.tablemanagement.featuremanager.TablemanagementFeatures;
 import io.oasp.gastronomy.restaurant.tablemanagement.logic.api.Tablemanagement;
 import io.oasp.gastronomy.restaurant.tablemanagement.logic.api.to.TableEto;
 import io.oasp.gastronomy.restaurant.tablemanagement.logic.api.to.TableSearchCriteriaTo;
@@ -86,7 +87,9 @@ public class TablemanagementImpl extends AbstractComponentFacade implements Tabl
   @RolesAllowed(PermissionConstants.FIND_TABLE)
   public PaginatedListTo<TableEto> findTableEtos(TableSearchCriteriaTo criteria) {
 
-    criteria.limitMaximumPageSize(MAXIMUM_HIT_LIMIT);
+    if (TablemanagementFeatures.LIMIT_TABLE_PAGE_SIZE.isActive()) {
+      criteria.limitMaximumPageSize(MAXIMUM_HIT_LIMIT);
+    }
     PaginatedListTo<TableEntity> tables = getTableDao().findTables(criteria);
 
     return mapPaginatedEntityList(tables, TableEto.class);
