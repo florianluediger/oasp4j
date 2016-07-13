@@ -1,6 +1,10 @@
 package io.oasp.gastronomy.restaurant.offermanagement.logic.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import io.oasp.gastronomy.restaurant.general.common.api.constants.PermissionConstants;
+import io.oasp.gastronomy.restaurant.general.common.api.datatype.Money;
 import io.oasp.gastronomy.restaurant.general.logic.api.to.BinaryObjectEto;
 import io.oasp.gastronomy.restaurant.general.logic.base.AbstractComponentFacade;
 import io.oasp.gastronomy.restaurant.general.logic.base.UcManageBinaryObject;
@@ -14,6 +18,7 @@ import io.oasp.gastronomy.restaurant.offermanagement.dataaccess.api.dao.MealDao;
 import io.oasp.gastronomy.restaurant.offermanagement.dataaccess.api.dao.OfferDao;
 import io.oasp.gastronomy.restaurant.offermanagement.dataaccess.api.dao.ProductDao;
 import io.oasp.gastronomy.restaurant.offermanagement.dataaccess.api.dao.SideDishDao;
+import io.oasp.gastronomy.restaurant.offermanagement.featuremanager.OffermanagementFeatures;
 import io.oasp.gastronomy.restaurant.offermanagement.logic.api.Offermanagement;
 import io.oasp.gastronomy.restaurant.offermanagement.logic.api.to.DrinkEto;
 import io.oasp.gastronomy.restaurant.offermanagement.logic.api.to.MealEto;
@@ -406,7 +411,14 @@ public class OffermanagementImpl extends AbstractComponentFacade implements Offe
 
     criteria.limitMaximumPageSize(MAXIMUM_HIT_LIMIT);
     PaginatedListTo<OfferEntity> offers = getOfferDao().findOffers(criteria);
-    return mapPaginatedEntityList(offers, OfferEto.class);
+
+    if (OffermanagementFeatures.ENABLE_DISCOUNT.isActive()) {
+      offers = addDiscountToOffers(offers);
+      return mapPaginatedEntityList(offers, OfferEto.class);
+    } else {
+      return mapPaginatedEntityList(offers, OfferEto.class);
+    }
+
   }
 
   @Override
@@ -498,6 +510,21 @@ public class OffermanagementImpl extends AbstractComponentFacade implements Offe
   public void setSideDishDao(SideDishDao sideDishDao) {
 
     this.sideDishDao = sideDishDao;
+  }
+
+  private PaginatedListTo<OfferEntity> addDiscountToOffers(PaginatedListTo<OfferEntity> offers) {
+
+    for (OfferEntity oe : offers.getResult()) {
+      Double oldPrice = oe.getPrice().getValue().doubleValue();
+
+      // calculate the new price and round it to two decimal places
+      BigDecimal newPrice = new BigDecimal(oldPrice * 0.75);
+      newPrice = newPrice.setScale(2, RoundingMode.HALF_UP);
+
+      oe.setPrice(new Money(newPrice));
+    }
+
+    return offers;
   }
 
 }
